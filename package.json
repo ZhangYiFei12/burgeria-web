@@ -1,0 +1,21 @@
+{
+  "name": "burgeria-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "汉堡小店 —— 原创复刻经典汉堡店经营玩法的网页游戏（仅学习用途）",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler pages deploy dist --project-name=burgeria-web"
+  },
+  "dependencies": {
+    "phaser": "^3.80.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vite": "^5.4.8",
+    "wrangler": "^3.80.0"
+  }
+}
