@@ -83,8 +83,9 @@ export class LobbyView {
       .setOrigin(0.5);
 
     // 点击接单
+    // 注意：Container 的 displayOrigin = size × 0.5，hitArea 必须从 (0,0) 起，不能用负半尺寸
     sprite.setSize(80, 140);
-    sprite.setInteractive(new Phaser.Geom.Rectangle(-40, -70, 80, 140), Phaser.Geom.Rectangle.Contains);
+    sprite.setInteractive(new Phaser.Geom.Rectangle(0, 0, 80, 140), Phaser.Geom.Rectangle.Contains);
     sprite.on('pointerdown', () => this.tryTakeOrder(c.uid));
 
     this.layer.add([sprite, ring, label]);

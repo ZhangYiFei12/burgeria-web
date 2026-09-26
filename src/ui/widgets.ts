@@ -63,7 +63,8 @@ export class Button extends Phaser.GameObjects.Container {
     this.redraw(false);
 
     this.setSize(this.bw, this.bh);
-    this.setInteractive(new Phaser.Geom.Rectangle(-this.bw / 2, -this.bh / 2, this.bw, this.bh), Phaser.Geom.Rectangle.Contains);
+    // Container 的 displayOrigin = size × 0.5，hitArea 从 (0,0) 起
+    this.setInteractive(new Phaser.Geom.Rectangle(0, 0, this.bw, this.bh), Phaser.Geom.Rectangle.Contains);
 
     this.on('pointerover', () => this.enabled && this.redraw(true));
     this.on('pointerout', () => this.enabled && this.redraw(false));

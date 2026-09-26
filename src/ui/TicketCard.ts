@@ -89,8 +89,9 @@ export class TicketCard extends Phaser.GameObjects.Container {
 
     if (draggable) {
       this.setSize(this.cardW, this.cardH);
+      // Container 的 displayOrigin = size × 0.5，hitArea 从 (0,0) 起
       this.setInteractive(
-        new Phaser.Geom.Rectangle(-this.cardW / 2, -this.cardH / 2, this.cardW, this.cardH),
+        new Phaser.Geom.Rectangle(0, 0, this.cardW, this.cardH),
         Phaser.Geom.Rectangle.Contains,
       );
       scene.input.setDraggable(this);

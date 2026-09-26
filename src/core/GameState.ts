@@ -33,6 +33,15 @@ export interface GameEvents extends Record<string, unknown> {
   'toast': { text: string; color?: string };
 }
 
+export interface GameStateOptions {
+  /** 顾客生成间隔（毫秒），调试用 */
+  spawnIntervalMs?: number;
+  /** 首位顾客延迟（毫秒），调试用 */
+  firstDelayMs?: number;
+  /** 当日顾客数覆盖（调试用） */
+  customersPerDay?: number;
+}
+
 /** 烤架格位上的肉饼（null = 空） */
 export type GrillSlots = (Patty | null)[];
 
@@ -70,16 +79,20 @@ export class GameState {
   private spawnTimer = 0;
   private spawnedToday = 0;
   private readonly totalToday: number;
+  private readonly spawnIntervalMs: number;
 
-  constructor(seed = 20260101, day = 1, rank = 1) {
+  constructor(seed = 20260101, day = 1, rank = 1, opts: GameStateOptions = {}) {
     this.rng = new RNG(seed);
     this.day = day;
     this.rank = rank;
-    this.totalToday = Math.min(
-      BALANCE.day.maxCustomers,
-      Math.floor(BALANCE.day.baseCustomers + (day - 1) * BALANCE.day.growthPerDay),
-    );
-    this.spawnTimer = BALANCE.day.firstSpawnDelayMs / 1000;
+    this.spawnIntervalMs = opts.spawnIntervalMs ?? BALANCE.day.spawnIntervalMs;
+    this.totalToday =
+      opts.customersPerDay ??
+      Math.min(
+        BALANCE.day.maxCustomers,
+        Math.floor(BALANCE.day.baseCustomers + (day - 1) * BALANCE.day.growthPerDay),
+      );
+    this.spawnTimer = (opts.firstDelayMs ?? BALANCE.day.firstSpawnDelayMs) / 1000;
   }
 
   // ────────────────────────── 查询 ──────────────────────────
@@ -136,7 +149,7 @@ export class GameState {
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0) {
         this.spawnCustomer();
-        this.spawnTimer = BALANCE.day.spawnIntervalMs / 1000;
+        this.spawnTimer = this.spawnIntervalMs / 1000;
       }
     }
 

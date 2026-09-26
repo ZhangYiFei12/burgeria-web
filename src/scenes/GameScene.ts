@@ -35,10 +35,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.state = new GameState(20260101, 1, 1);
+    // 调试参数：?fast=1 加快顾客生成 · ?n=3 当日顾客数 · ?station=grill 直达工作站
+    const params = new URLSearchParams(window.location.search);
+    const fast = params.get('fast') === '1';
+    const nParam = Number(params.get('n'));
+    const debugOpts = {
+      ...(fast ? { spawnIntervalMs: 1500, firstDelayMs: 300 } : {}),
+      ...(Number.isFinite(nParam) && nParam > 0 ? { customersPerDay: nParam } : {}),
+    };
+
+    this.state = new GameState(20260101, 1, 1, debugOpts);
     this.dayResults = [];
 
-    // ── 四个工作站容器 ──
+    // ── 四个工作站容器（先建容器，背景一律画进各自容器内，避免遮住动态对象）──
     this.stations = {
       lobby: this.add.container(0, 0),
       order: this.add.container(0, 0),
@@ -46,7 +55,7 @@ export class GameScene extends Phaser.Scene {
       build: this.add.container(0, 0),
     };
 
-    // 大厅背景
+    // 大厅背景（必须加到 lobby 容器内且位于最底层，否则会盖住顾客）
     this.buildLobbyBackground();
     this.views = {
       lobby: new LobbyView(this, this.state, this.stations.lobby),
@@ -61,8 +70,26 @@ export class GameScene extends Phaser.Scene {
 
     this.switchStation('lobby', true);
 
+    // 调试直达：?station=grill 等
+    const wantStation = params.get('station');
+    if (wantStation && ['lobby', 'order', 'grill', 'build'].includes(wantStation)) {
+      this.switchStation(wantStation as StationId);
+    }
+
     // 小票拖到托盘 → 交付
     this.events.on('ticket:dropped', (card: TicketCard) => this.handleTicketDrop(card));
+
+    // 调试钩子：?debug=1 时暴露状态供自动化验证
+    if (params.get('debug') === '1') {
+      (window as unknown as { __dbg: () => unknown; __game: Phaser.Game }).__dbg = () => ({
+        day: this.state.day,
+        station: this.state.station,
+        customers: this.state.customers.length,
+        tickets: this.state.tickets.length,
+        grill: this.state.grill.filter(Boolean).length,
+      });
+      (window as unknown as { __game: Phaser.Game }).__game = this.game;
+    }
   }
 
   update(_time: number, delta: number): void {
@@ -83,7 +110,6 @@ export class GameScene extends Phaser.Scene {
 
   private buildLobbyBackground(): void {
     const g = this.add.graphics();
-    // 店内
     g.fillStyle(C.wall, 1);
     g.fillRect(0, 0, 960, 560);
     g.fillStyle(C.wallShade, 1);
@@ -112,7 +138,7 @@ export class GameScene extends Phaser.Scene {
     g.fillRoundedRect(600, 60, 320, 90, 16);
     g.lineStyle(6, C.uiBorder, 1);
     g.strokeRoundedRect(600, 60, 320, 90, 16);
-    this.add
+    const sign = this.add
       .text(760, 105, '汉 堡 小 店', {
         fontFamily: '"Microsoft YaHei", sans-serif',
         fontSize: '36px',
@@ -125,7 +151,7 @@ export class GameScene extends Phaser.Scene {
     g.fillRoundedRect(430, 120, 130, 160, 6);
     g.lineStyle(4, C.wood, 1);
     g.strokeRoundedRect(430, 120, 130, 160, 6);
-    this.add
+    const poster = this.add
       .text(495, 200, '今日\n特惠', {
         fontFamily: '"Microsoft YaHei", sans-serif',
         fontSize: '22px',
@@ -139,6 +165,9 @@ export class GameScene extends Phaser.Scene {
     g.moveTo(120, 470);
     g.lineTo(840, 470);
     g.strokePath();
+
+    // 全部加入 lobby 容器，且背景在最底层（顾客随后 add，自然叠在上方）
+    this.stations?.lobby.add([g, sign, poster]);
   }
 
   private createNav(): void {
