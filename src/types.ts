@@ -44,7 +44,10 @@ export type TicketItem =
 /** 顾客订单 */
 export interface Ticket {
   id: string;
-  customerId: string;
+  /** 顾客运行时实例 id（用于回查顾客） */
+  customerUid: string;
+  /** 顾客定义 id（形象/偏好表） */
+  customerDefId: string;
   /** 肉饼目标火候 */
   doneness: Doneness;
   /** 自下而上的要求顺序 */
@@ -56,8 +59,6 @@ export interface Ticket {
 /** 烤架上的肉饼实体 */
 export interface Patty {
   id: string;
-  /** 目标火候（来自小票） */
-  target: Doneness;
   /** 底面熟度 0..1+ */
   bottom: number;
   /** 顶面熟度 0..1+ */

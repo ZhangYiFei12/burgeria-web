@@ -5,11 +5,10 @@ import { uid } from '../core/RNG';
 /** 每秒单面熟度增量 */
 export const COOK_RATE = 1 / BALANCE.grill.sideSeconds;
 
-/** 新建一块生肉饼 */
-export function createPatty(target: Doneness): Patty {
+/** 新建一块生肉饼（火候目标不写在肉饼上，只在小票上 —— 还原原版） */
+export function createPatty(): Patty {
   return {
     id: uid('patty'),
-    target,
     bottom: 0,
     top: 0,
     flipped: false,
@@ -63,18 +62,26 @@ export function isUsable(p: Patty): boolean {
 }
 
 /**
- * 建议翻面时机：底面接近目标一半时提示
+ * 建议翻面时机（针对小票指定的火候）。
+ * 因为翻面后底面仍以 residualCookRate 继续受热，所以最佳翻面点是
+ *     bottom = target × (1 - residualCookRate)
+ * 而非目标的 50%：这样翻面后底面恰好继续烤到目标值，两面同时到点，
+ * 也就实现了原版攻略说的「烤到一半就翻面，两面颜色才会一样深」。
  */
-export function shouldFlip(p: Patty): boolean {
-  return !p.flipped && p.bottom >= targetLevel(p.target) * 0.5;
+export function flipPointFor(doneness: Doneness): number {
+  return targetLevel(doneness) * (1 - BALANCE.grill.residualCookRate);
+}
+
+export function shouldFlip(p: Patty, doneness: Doneness): boolean {
+  return !p.flipped && p.bottom >= flipPointFor(doneness);
 }
 
 /** 肉饼状态文案（UI 用） */
-export function pattyStatus(p: Patty): string {
+export function pattyStatus(p: Patty, doneness: Doneness): string {
   if (isBurnt(p)) return '烤焦了！';
   if (isCold(p)) return '凉了';
   const level = cookedLevel(p);
-  const target = targetLevel(p.target);
+  const target = targetLevel(doneness);
   if (level < target * 0.6) return '还生';
   if (level < target * 0.9) return '快好了';
   if (level <= target * 1.12) return '正好';

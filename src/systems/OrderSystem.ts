@@ -15,6 +15,7 @@ export interface OrderPool {
 export function generateTicket(
   rng: RNG,
   customer: CustomerDef,
+  customerUid: string,
   rank: number,
   pool: OrderPool,
   day: number,
@@ -52,7 +53,8 @@ export function generateTicket(
 
   return {
     id: uid('ticket'),
-    customerId: customer.id,
+    customerUid,
+    customerDefId: customer.id,
     doneness,
     items,
     createdAt: 0,

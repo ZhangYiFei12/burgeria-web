@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { TitleScene } from './scenes/TitleScene';
+import { GameScene } from './scenes/GameScene';
 
 /**
  * 汉堡小店 —— 入口
@@ -16,5 +17,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, TitleScene],
+  scene: [BootScene, TitleScene, GameScene],
 });

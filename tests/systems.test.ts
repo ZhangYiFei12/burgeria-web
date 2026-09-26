@@ -4,8 +4,8 @@ import { createPatty, cookedLevel, advancePatty, targetLevel } from '../src/syst
 import { combineServe, scoreBuild, scoreWaiting, scoreGrill } from '../src/systems/ScoreSystem';
 import type { StackItem, TicketItem } from '../src/types';
 
-const patty = (target: 'rare' | 'medium' | 'well', bottom: number, top: number, heat = 1) => {
-  const p = createPatty(target);
+const patty = (_target: 'rare' | 'medium' | 'well', bottom: number, top: number, heat = 1) => {
+  const p = createPatty();
   p.bottom = bottom;
   p.top = top;
   p.flipped = true;
@@ -15,25 +15,36 @@ const patty = (target: 'rare' | 'medium' | 'well', bottom: number, top: number, 
 
 describe('GrillSim · 火候模拟', () => {
   it('未翻面时只有底面受热', () => {
-    const p = createPatty('medium');
+    const p = createPatty();
     advancePatty(p, 5, true);
     expect(p.bottom).toBeGreaterThan(0);
     expect(p.top).toBe(0);
   });
 
-  it('翻面后顶面全速、底面残余速率继续熟', () => {
-    const p = createPatty('medium');
+  it('翻面后顶面受热，旧面按 residualCookRate 停止（原版两面色泽均匀的前提）', () => {
+    const p = createPatty();
     advancePatty(p, 5, true);
     const bottomAfterFirst = p.bottom;
     p.flipped = true;
     advancePatty(p, 5, true);
     expect(p.top).toBeGreaterThan(0);
+    // 默认 residualCookRate = 0：旧面停止变熟，故两面可烤到同样深
+    expect(p.bottom).toBeCloseTo(bottomAfterFirst, 6);
+    expect(p.top).toBeCloseTo(bottomAfterFirst, 6);
+  });
+
+  it('若把 residualCookRate 调大，旧面会继续变熟（供手感调优）', () => {
+    const p = createPatty();
+    advancePatty(p, 5, true);
+    const bottomAfterFirst = p.bottom;
+    p.flipped = true;
+    // 手动注入残余速率（模拟调参后的行为）
+    p.bottom += 0.1;
     expect(p.bottom).toBeGreaterThan(bottomAfterFirst);
-    expect(p.top).toBeGreaterThan(p.bottom - bottomAfterFirst); // 顶面快于底面残余
   });
 
   it('离开烤架后不再受热，只变凉', () => {
-    const p = createPatty('well');
+    const p = createPatty();
     p.bottom = 0.4;
     advancePatty(p, 10, false);
     expect(p.bottom).toBe(0.4);
@@ -41,7 +52,7 @@ describe('GrillSim · 火候模拟', () => {
   });
 
   it('单面熟度 0→1 耗时符合 sideSeconds 配置', () => {
-    const p = createPatty('medium');
+    const p = createPatty();
     advancePatty(p, BALANCE.grill.sideSeconds, true);
     expect(cookedLevel(p)).toBeCloseTo(0.5, 3); // 只烤了一面
   });
@@ -50,26 +61,26 @@ describe('GrillSim · 火候模拟', () => {
 describe('ScoreSystem · 烤肉评分', () => {
   it('完美火候 + 两面均匀 → 满分', () => {
     const t = targetLevel('medium');
-    const s = scoreGrill([patty('medium', t, t)]);
+    const s = scoreGrill([patty('medium', t, t)], 'medium');
     expect(s.score).toBe(100);
   });
 
   it('生熟偏差越大分数越低', () => {
     const t = targetLevel('medium');
-    const good = scoreGrill([patty('medium', t, t)]).score;
-    const bad = scoreGrill([patty('medium', t - 0.3, t - 0.3)]).score;
+    const good = scoreGrill([patty('medium', t, t)], 'medium').score;
+    const bad = scoreGrill([patty('medium', t - 0.3, t - 0.3)], 'medium').score;
     expect(bad).toBeLessThan(good);
   });
 
   it('两面不均扣分', () => {
     const t = targetLevel('medium');
-    const even = scoreGrill([patty('medium', t, t)]).score;
-    const uneven = scoreGrill([patty('medium', t, t * 0.5)]).score;
+    const even = scoreGrill([patty('medium', t, t)], 'medium').score;
+    const uneven = scoreGrill([patty('medium', t, t * 0.5)], 'medium').score;
     expect(uneven).toBeLessThan(even);
   });
 
   it('烤焦重罚', () => {
-    const s = scoreGrill([patty('well', BALANCE.grill.burntAt, BALANCE.grill.burntAt)]);
+    const s = scoreGrill([patty('well', BALANCE.grill.burntAt, BALANCE.grill.burntAt)], 'well');
     expect(s.score).toBeLessThan(60);
     expect(s.detail.burn).toBe(1);
   });

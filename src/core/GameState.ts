@@ -9,6 +9,7 @@ import { combineServe, coreItemsOf, pattiesOf } from '../systems/ScoreSystem';
 import type {
   Customer,
   CustomerDef,
+  Doneness,
   Patty,
   ServeResult,
   StackItem,
@@ -227,6 +228,7 @@ export class GameState {
     const ticket = generateTicket(
       this.rng,
       c.def,
+      c.uid,
       this.rank,
       { toppings: unlockedToppings(this.rank), sauces: unlockedSauces(this.rank) },
       this.day,
@@ -249,7 +251,17 @@ export class GameState {
 
   // ────────────────────────── 烤肉台 ──────────────────────────
 
-  /** 从肉饼盒取一块生肉饼放到烤架空位 */
+  /**
+   * 当前参考火候：取最早一张待处理小票的要求。
+   * 原版肉饼本身不携带火候，玩家对照小票烤制；此值仅供 UI 提示（翻面点/状态文案），
+   * 实际评分始终以交付时匹配的小票为准。
+   */
+  get referenceDoneness(): Doneness {
+    const pending = this.pendingTickets;
+    return pending.length > 0 ? pending[0].doneness : 'medium';
+  }
+
+  /** 从肉饼盒取一块生肉饼放到烤架空位（肉饼不携带火候，火候只在小票上） */
   takePattyFromBox(slot: number): Patty | null {
     if (slot < 0 || slot >= this.grill.length) return null;
     if (this.grill[slot]) return null;
@@ -257,8 +269,7 @@ export class GameState {
       this.events.emit('toast', { text: '肉饼用完了！', color: '#e05a5a' });
       return null;
     }
-    const p = createPatty('medium');
-    p.burned = false;
+    const p = createPatty();
     this.grill[slot] = p;
     this.pattiesLeft -= 1;
     return p;
@@ -353,7 +364,7 @@ export class GameState {
       this.events.emit('toast', { text: '先把小票拖到托盘上', color: '#e05a5a' });
       return null;
     }
-    const customer = this.customerByUid(ticket.customerId);
+    const customer = this.customerByUid(ticket.customerUid);
     if (!customer || customer.phase !== 'waiting') {
       this.events.emit('toast', { text: '这张小票的顾客已经走了', color: '#e05a5a' });
       return null;

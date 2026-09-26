@@ -28,7 +28,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, 158, 'v0.1.0 · 项目骨架已就绪', {
+      .text(width / 2, 158, 'v0.2.0 · Phase 1 核心循环', {
         fontFamily: '"Microsoft YaHei", sans-serif',
         fontSize: '22px',
         color: '#8c5a3c',
@@ -36,10 +36,11 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const hint = this.add
-      .text(width / 2, height - 45, '脚手架运行正常 — 等待 Phase 1 核心循环', {
+      .text(width / 2, height - 45, '点击任意处开始营业', {
         fontFamily: '"Microsoft YaHei", sans-serif',
-        fontSize: '20px',
+        fontSize: '22px',
         color: '#f5e6c8',
+        fontStyle: 'bold',
       })
       .setOrigin(0.5);
 
@@ -49,6 +50,17 @@ export class TitleScene extends Phaser.Scene {
       duration: 900,
       yoyo: true,
       repeat: -1,
+    });
+
+    // 点击进入游戏
+    this.input.once('pointerdown', () => {
+      this.cameras.main.fadeOut(220, 0, 0, 0);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.scene.start('Game');
+      });
+    });
+    this.input.keyboard?.once('keydown', () => {
+      this.scene.start('Game');
     });
   }
 }

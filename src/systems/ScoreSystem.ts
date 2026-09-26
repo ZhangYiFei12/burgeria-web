@@ -28,18 +28,18 @@ const clamp = (v: number, lo = 0, hi = 100): number => Math.max(lo, Math.min(hi,
 
 /**
  * 烤肉评分：熟度误差 + 两面均匀度 + 焦糊 + 变凉
+ * @param doneness 小票要求的火候（目标只来自小票）
  */
-export function scoreGrill(patties: Patty[], targetOverride?: Doneness): { score: number; detail: GrillDetail } {
+export function scoreGrill(patties: Patty[], doneness: Doneness): { score: number; detail: GrillDetail } {
   const detail: GrillDetail = { patties: patties.length, avgError: 0, burn: 0 };
   if (patties.length === 0) return { score: 0, detail };
 
   const cfg = BALANCE.score.grill;
+  const want = targetLevel(doneness);
   let total = 0;
   let errorSum = 0;
 
   for (const p of patties) {
-    // 目标火候以小票为准（玩家从盒中取出生肉饼，不预先指定火候）
-    const want = targetLevel(targetOverride ?? p.target);
     const error = Math.abs(cookedLevel(p) - want);
     const even = Math.abs(p.bottom - p.top);
     errorSum += error;
