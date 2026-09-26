@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { drawStyleSampleBurger } from '../art/drawBurger';
+import { addStyleSampleBurger } from '../art/drawBurger';
 
 /** 标题画面：项目骨架的可见性验证 + 程序化美术风格样张 */
 export class TitleScene extends Phaser.Scene {
@@ -10,29 +10,25 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
 
-    // 背景装饰：暖色渐变天空 + 店铺色带
-    this.add
-      .rectangle(0, 0, width, height, 0xf5e6c8)
-      .setOrigin(0);
-    this.add
-      .rectangle(0, height - 90, width, 90, 0x8c5a3c)
-      .setOrigin(0);
+    // 背景：暖色地面 + 店铺色带
+    this.add.rectangle(0, 0, width, height, 0xf5e6c8).setOrigin(0);
+    this.add.rectangle(0, height - 90, width, 90, 0x8c5a3c).setOrigin(0);
 
     // 程序化绘制的汉堡样张（风格基准，后续替换为完整部件系统）
-    drawStyleSampleBurger(this, width / 2, height / 2 - 40, 2.2);
+    addStyleSampleBurger(this, width / 2, 420, 1.3);
 
     this.add
-      .text(width / 2, 120, '汉堡小店', {
-        fontFamily: '"ZCOOL KuaiLe", "Microsoft YaHei", sans-serif',
-        fontSize: '72px',
+      .text(width / 2, 92, '汉堡小店', {
+        fontFamily: '"Microsoft YaHei", sans-serif',
+        fontSize: '76px',
         color: '#5a3218',
         stroke: '#fff4dd',
-        strokeThickness: 10,
+        strokeThickness: 12,
       })
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, 200, 'v0.1.0 · 项目骨架已就绪', {
+      .text(width / 2, 158, 'v0.1.0 · 项目骨架已就绪', {
         fontFamily: '"Microsoft YaHei", sans-serif',
         fontSize: '22px',
         color: '#8c5a3c',
